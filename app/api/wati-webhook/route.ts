@@ -3,38 +3,36 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log('WATI WEBHOOK:', JSON.stringify(body, null, 2));
+    const text = (body.text || '').toLowerCase().trim();
+    const waId = body.waId;
 
-    const waId = body.waId || body.data?.waId || body.from || '';
-    const text = (body.text || body.data?.text || body.message?.text || '')
-      .toString()
-      .toLowerCase()
-      .trim();
+    console.log('WATI WEBHOOK:', JSON.stringify(body));
 
-    // Auto-reply when someone says hi
-    if (waId && (text === 'hi' || text === 'hello' || text === 'hii')) {
+    if (waId && text === 'hi') {
       const token = process.env.WATI_API_KEY;
-      const tenantId = process.env.WATI_TENANT_ID;
+      const tenantId = process.env.WATI_TENANT_ID || '10141519';
 
-      // For your account - new Cloud API URL
       const url = `https://live-server-${tenantId}.wati.io/api/v1/sendSessionMessage/${waId}`;
 
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `${token}`, // your token already has wati_ prefix, no Bearer needed
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messageText: 'Hello 👋 Welcome to Bhawani Spaces! Tell me what space you need?',
+          messageText: 'Hello 👋 Welcome to Bhawani Spaces! How can I help you?',
         }),
       });
+
+      const result = await res.text();
+      console.log('WATI SEND RESULT:', result);
     }
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json({ success: true });
   }
 }
 
