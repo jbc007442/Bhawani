@@ -10,21 +10,29 @@ export async function POST(req: NextRequest) {
 
     if (!waId) return NextResponse.json({ success: true });
 
-    // Only reply to hi/hello
-    if (text === 'hi' || text === 'hello' || text === 'hey') {
-      const token = process.env.WATI_API_KEY; // wati_a2dc587c...
-      const tenant = process.env.WATI_TENANT_ID || '10141519';
+    const token = process.env.WATI_API_KEY?.trim();
+    const tenant = process.env.WATI_TENANT_ID?.trim() || '10141519';
 
+    if (!token) {
+      console.error('MISSING WATI_API_KEY in Vercel Env!');
+      return NextResponse.json({ success: true });
+    }
+
+    // Reply to any greeting
+    if (text.includes('hi') || text.includes('hello') || text.includes('hey')) {
       const url = `https://live-server-${tenant}.wati.io/api/v1/sendSessionMessage/${waId}`;
+
+      console.log('SENDING TO:', url);
 
       const watiRes = await fetch(url, {
         method: 'POST',
         headers: {
-          Authorization: token as string,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messageText: 'Hi 👋 Welcome to Bhawani Spaces! 🏠\nTell me what you are looking for?',
+          messageText:
+            'Hi 👋 Welcome to Bhawani Spaces! 🏠\nTell me what you are looking for?\n\n1. Office Space\n2. Coworking\n3. Meeting Room',
         }),
       });
 
@@ -40,5 +48,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ status: 'Active' });
+  return NextResponse.json({ status: 'Active - Bhawani Spaces Webhook' });
 }
